@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { NgLibrary, SymbolType, SymbolInputType, ConfigPropType } from './framework';
 import { LibModuleNgFactory } from './module.ngfactory';
 
-import { ExampleComponent } from './example/example.component';
+import { ShreyPlotComponent } from './shreyPlot/shreyPlot.component';
 
 @NgModule({
-  declarations: [ ExampleComponent ],
+  declarations: [ ShreyPlotComponent ],
   imports: [ CommonModule ] ,
-  exports: [ ExampleComponent ],
-  entryComponents: [ ExampleComponent ]
+  exports: [ ShreyPlotComponent ],
+  entryComponents: [ ShreyPlotComponent ]
 })
 export class LibModule { }
 
@@ -18,11 +18,11 @@ export class ExtensionLibrary extends NgLibrary {
   moduleFactory = LibModuleNgFactory;
   symbols: SymbolType[] = [
     {
-      name: 'example-symbol',
-      displayName: 'Example Symbol',
+      name: 'ShreyPlot-symbol',
+      displayName: 'ShreyPlot Symbol',
       dataParams: { shape: 'single' },
       thumbnail: '^/assets/images/example.svg',
-      compCtor: ExampleComponent,
+      compCtor: ShreyPlotComponent,
       inputs: [
         SymbolInputType.Data,
         SymbolInputType.PathPrefix

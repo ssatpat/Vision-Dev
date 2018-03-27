@@ -6,17 +6,19 @@
 import { Component, Input, OnChanges } from '@angular/core';
 
 @Component({
-  selector: 'example',
-  templateUrl: 'example.component.html',
-  styleUrls: ['example.component.css']
+  selector: 'shrey-plot',
+  templateUrl: './shreyPlot.component.html',
+  styleUrls: ['./shreyPlot.component.css']
 })
-export class ExampleComponent implements OnChanges {
+export class ShreyPlotComponent implements OnChanges {
   @Input() fgColor: string;
   @Input() bkColor: string;
   @Input() data: any;
   @Input() pathPrefix: string;
   values: any[];
-
+  ngOnInit(): void {
+    this.data = null
+  }
   ngOnChanges(changes) {
     if (changes.data) {
       this.values = this.formatData();
@@ -25,7 +27,11 @@ export class ExampleComponent implements OnChanges {
 
   formatData() {
     if (this.isDataValid()) {
-      return this.data.body.map(r => ({ path: r.path, value: this.formatValue(r.value) }));
+      
+      //var timestamp = this.data.body.timestamp
+      //return this.data.body.map(r => ({ path: r.path, value: this.formatValue(r.value), type: r.type}))
+      //return this.data.body.map(r => ({ path: r.path, value: this.formatValue(r.value), timestamp: r.timestamp }));
+      return this.data.body.map(u => ({path: u.path, value: this.formatValue(u.value), timestamp: u.timestamp}));
     } else {
       return [];
     }

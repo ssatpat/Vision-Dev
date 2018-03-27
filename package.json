@@ -1,5 +1,5 @@
 {
-  "name": "example-symbol-library",
+  "name": "shrey-plot-library",
   "version": "1.0.0",
   "scripts": {
     "clean": "rimraf out-tsc dist node_modules",
