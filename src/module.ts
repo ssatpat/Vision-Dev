@@ -20,7 +20,7 @@ export class ExtensionLibrary extends NgLibrary {
     {
       name: 'ShreyPlot-symbol',
       displayName: 'ShreyPlot Symbol',
-      dataParams: { shape: 'single' },
+      dataParams: { shape: 'xy' , dataMode: 'interpolated' },
       thumbnail: '^/assets/images/example.svg',
       compCtor: ShreyPlotComponent,
       inputs: [
