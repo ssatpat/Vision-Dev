@@ -3,8 +3,9 @@
  * Copyright © 2017-2018 OSIsoft, LLC. All rights reserved.
  * Use of this source code is governed by the terms in the accompanying LICENSE file.
  */
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import {PiWebApiService} from '@osisoft/piwebapi';
+import Chart from 'chart.js';
 
 @Component({
   selector: 'shrey-plot',
@@ -29,8 +30,59 @@ export class ShreyPlotComponent implements OnChanges {
   //}
 
   ngOnInit(): void {
-    this.data = null
+    this.data = null;
   }
+
+  private initChart() {
+
+    let data:{
+      x:any,
+      y:any
+    }[] =new Array();
+    data = this.prettifyDataVals();
+    const c = <HTMLCanvasElement> document.getElementById('myChart');
+    const ctx =  c.getContext('2d');
+    var scatterChart = new Chart(ctx, {
+      type: 'scatter',
+      data: {
+          datasets: [{
+              label: 'Scatter Dataset',
+              data: data
+              // [{
+              //     x: data[1].x,
+              //     y: 0
+              // }, {
+              //     x: 0,
+              //     y: 10
+              // }, {
+              //     x: 10,
+              //     y: 5
+              // }]
+          }]
+      },
+      options: {
+          scales: {
+              xAxes: [{
+                  type: 'linear',
+                  position: 'middle'
+              }],
+              
+          },
+          maintainAspectRatio: true
+      }
+  });
+
+  addData(scatterChart, 'Scatter Dataset' , data);
+
+  function addData(chart, label, data){
+    chart.data.datasets[0].data.push(data);
+    chart.update();
+
+  }
+
+  }
+
+
   ngOnChanges(changes) {
     if(changes.data){
       if (this.data.body.length == 0){
@@ -38,8 +90,9 @@ export class ShreyPlotComponent implements OnChanges {
         //this.timestamps =null;
       }
       if (this.data.body.length > 1) {
-        this.values = this.prettifyDataVals();
+        //this.values = this.prettifyDataVals();
         this.timestamps = this.GetTimestamps();
+        this.initChart();
       }
     }
   }
@@ -47,30 +100,19 @@ export class ShreyPlotComponent implements OnChanges {
 prettifyDataVals(){
   let v1:any[] = new Array();
   let v2:any[] = new Array();
+
+  let lol : { x:any, y:any} [] = new Array();
+
+  //lol[0] = {x: 1, y: 1};
+
   let vals: any = this.GetValues();
   for(var i = 0; i<this.data.body[1].events.length;i++){
-    v1[i] = vals[0][i][0];
-    v2[i] = vals[0][i][1];
+    lol[i] = {x: vals[0][i][0], y: vals[0][i][1]};
     //console.log(v1,v2);
   }
-
-  return v1
+  //this.data.body[1].events.length
+  return lol
 }
-
-  //formatData() {
-    //if (this.isDataValid()) {
-      
-      //var timestamp = this.data.body.timestamp
-      //let timestamp: any[]
-      //let value: any[]
-      //var ev = this.data.body.map(r => ({events: r.events}))
-      //return this.data.body.map(r => ({ path: r.path, value: this.formatValue(r.value), type: r.type}))
-      //return this.data.body.map(r => ({ path: r.path, value: this.formatValue(r.value), timestamp: r.timestamp }));
-      //return this.data.body.map(r => ({ path: r.path, value: r.value, timestamp: r.timestamp }));
-    //} else {
-    //  return [];
-   // }
- // }
 
   GetValues(){
     let v: any[][][] = new Array();
