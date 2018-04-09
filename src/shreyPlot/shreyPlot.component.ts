@@ -112,12 +112,20 @@ prettifyDataVals(){
     let mat: any[][] = new Array();
     mat = cov.apply(this, A);
     console.log(mat);
-    let E : any[] = new Array();
-    E = numeric.eig(mat);
-    v = this.SubtractMean(x);
+    
+    var E = numeric.eig(mat);
+    console.log(E.E.x);
+
+
+    x = this.SubtractMean(x);
+    let FD: any[][] = new Array();
+    FD = numeric.dot(E.E.x, A);
+    // FD = numeric.dot(E.x,v); 
+    console.log(FD);
+    x = numeric.transpose(FD);
     //val = this.data.body[1].events["1"].value["1"];
     //console.log(v);
-    return v;
+    return x;
   }
 
 
