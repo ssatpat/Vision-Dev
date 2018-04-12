@@ -41,6 +41,7 @@
     "core-js": "2.5.3",
     "express": "4.16.2",
     "mathjs": "^4.0.1",
+    "ml-pca": "^2.1.0",
     "node-matrix": "^1.0.0",
     "numeric": "^1.2.6",
     "rxjs": "5.5.6",

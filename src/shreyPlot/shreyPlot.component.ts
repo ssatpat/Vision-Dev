@@ -9,6 +9,8 @@ import Chart from 'chart.js';
 import * as maths from 'mathjs';
 import cov from 'compute-covariance';
 import numeric from 'numeric';
+//import PCA from 'ml-pca';
+//import * as fs from 'fs';
 
 @Component({
   selector: 'shrey-plot',
@@ -27,13 +29,6 @@ export class ShreyPlotComponent implements OnChanges {
   timestamps: any[];
   
 
-  //constructor(public piwebapi: PiWebApiService) {
-    
-  //}
-  //constructor(data: any){
-  //  this.data = null
-  //}
-
   ngOnInit(): void {
     this.data = null;
   }
@@ -47,12 +42,16 @@ export class ShreyPlotComponent implements OnChanges {
       }
       if (this.data.body.length > 1) {
         //this.values = this.prettifyDataVals();
-        this.timestamps = this.GetTimestamps();
         //this.values = this.GetValues();
         //this.initChart('myChart');
         //this.initChart('myChart');
-        const chart = new Charts('myChart', this.prettifyDataVals());
+        // let data : { x:any, y:any} [] = new Array();
+        // data = this.prettifyDataVals();
+
+        const chart = new Charts('myChart', this.GetValues());
         chart.makeChart();
+        // chart.addData('myChart',null,data);
+
         // const chart2 = new Charts('myChart2', this.prettifyDataVals());
         // chart2.makeChart();
 
@@ -65,11 +64,13 @@ prettifyDataVals(){
   let v2:any[] = new Array();
 
   let lol : { x:any, y:any} [] = new Array();
+  let complete : { x:any, y:any} [] = new Array();
+  let completing : { x:any, y:any} [] = new Array();
 
   //lol[0] = {x: 1, y: 1};
 
   let vals: any[][] = new Array();
-  vals = this.GetValues();
+  //vals = this.GetValues();
   for(var i = 0; i<vals.length;i++){
     lol[i] = {x: vals[i][0], y: vals[i][1]};
     //console.log(v1,v2);
@@ -93,39 +94,83 @@ prettifyDataVals(){
         }
       }
     }
-
+    var state: any[] = new Array();
     var x: any[][] = new Array();
+    for(var i = 0;i<v[0].length;i++){
+      state[i] = v[0][i][0].Name;
+    }
+
     for(var i =0;i<v[0].length;i++){
       x[i] = new Array();
-      for(var j = 0; j<v.length+1;j++){
-        if(j <=1){
-          x[i][j] = v[0][i][j];
-        }
-        else{
-          x[i][j] = v[j-1][i][1];
-        }
+      for(var j = 0; j<v.length;j++){
+        x[i][j] = v[j][i][1];
       }
 
     }    
     let A: any;
+    x = this.SubtractMean(x);
     A = numeric.transpose(x);
+    let pca: any[] = new Array();
+    //pca = new PCA(x);
+
     let mat: any[][] = new Array();
     mat = cov.apply(this, A);
-    console.log(mat);
     
     var E = numeric.eig(mat);
-    console.log(E.E.x);
+    let lambda :any[]= new Array();
+    lambda = E.lambda.x;
+    var lambda_sort = lambda.sort
+    
 
-
-    x = this.SubtractMean(x);
+    //x = this.SubtractMean(x);
     let FD: any[][] = new Array();
     FD = numeric.dot(E.E.x, A);
-    // FD = numeric.dot(E.x,v); 
-    console.log(FD);
     x = numeric.transpose(FD);
-    //val = this.data.body[1].events["1"].value["1"];
-    //console.log(v);
-    return x;
+
+    let drilling : { x:any, y:any} [] = new Array();
+    let complete : { x:any, y:any} [] = new Array();
+    let completing : { x:any, y:any} [] = new Array();
+    let ct_d : number = 0;
+    let ct_com : number = 0;
+    let ct_ing : number = 0;
+
+    // let time: any[] = new Array();
+    // time = this.GetTimestamps();
+    for(var i = 0; i<x.length;i++){
+      if(state[i] == "Drilling"){
+        drilling[ct_d] = {x: x[i][0], y: x[i][1] };
+        ct_d++;
+      }
+      if(state[i] == "Completing"){
+        completing[ct_ing] = {x: x[i][0], y: x[i][1]};
+        ct_ing++;
+      }
+      if(state[i] == "Complete"){
+        complete[ct_com] = {x: x[i][0], y: x[i][1]};
+        ct_com++;
+      }
+    }
+
+    var scatterChartData = {
+      datasets: [{
+          label: "Drilling",
+            data: drilling,
+            backgroundColor: '#4286f4'
+      },  {
+          label: "Completing",
+            data: completing,
+            backgroundColor: '#e84d14'
+      },  {
+          label: "Complete",
+            data: complete,
+            backgroundColor: '#35c11d'
+      }]
+    }
+
+
+
+
+    return scatterChartData;
   }
 
 
@@ -144,7 +189,15 @@ prettifyDataVals(){
         }
       }
     }
-    return t;
+
+    let time: any[] = new Array();
+    //vals = this.GetValues();
+    for(var i = 0; i<t.length;i++){
+      time[i] = t[0][i][0]
+      //console.log(v1,v2);
+    }
+  
+    return time;
 
   }
 
@@ -191,26 +244,39 @@ prettifyDataVals(){
 
 export class Charts{
   _name: string;
-  _data: {x:any,y:any}[];
+  _data: any;
+  _time: any;
 
-  constructor(name: string, data: {x:any,y:any}[]){
+  constructor(name: string, data: any){
     this._data = data;
     this._name = name;
   }
 
   public makeChart(){
+    
     const c = <HTMLCanvasElement> document.getElementById(this._name);
     const ctx =  c.getContext('2d');
     var scatterChart = new Chart(ctx, {
       type: 'scatter',
-      data: {
-          datasets: [{
-              label: 'XY Data',
-              data: this._data,
-              backgroundColor: '#ff6384'
-          }]
-      },
+      data: this._data,
       options: {
+          responsive: true,
+          hoverMode: 'single',
+          events: ['click'],
+          tooltips: {
+            enabled: true,
+            mode: 'single',
+            callbacks: {
+                label: function(tooltipItems, data) { 
+                   var multistringText = tooltipItems.xLabel + ' ' + tooltipItems.yLabel;
+                   //var myArr =  this._time;
+                      //  multistringText.push(this._time);
+                      //  multistringText.push(tooltipItems.index+1);
+                      //  multistringText.push('One more Item');
+                    return multistringText;
+                }
+            }
+          },
           scales: {
               xAxes: [{
                   type: 'linear',
@@ -221,10 +287,8 @@ export class Charts{
           maintainAspectRatio: true
       }
   });
+
   }
-
-  
-
-
 }
+
 
