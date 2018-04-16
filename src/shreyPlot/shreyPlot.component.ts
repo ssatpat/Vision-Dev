@@ -19,7 +19,7 @@ import numeric from 'numeric';
 })
 
 
-export class ShreyPlotComponent implements OnChanges {
+export class ShreyPlotComponent implements OnChanges, OnInit {
   @Input() fgColor: string;
   @Input() bkColor: string;
   @Input() data: any;
@@ -28,7 +28,6 @@ export class ShreyPlotComponent implements OnChanges {
   values: any[];
   timestamps: any[];
   
-
   ngOnInit(): void {
     this.data = null;
   }
@@ -38,50 +37,19 @@ export class ShreyPlotComponent implements OnChanges {
     if(changes.data){
       if (this.data.body.length == 0){
         this.values = null;
-        //this.timestamps =null;
       }
       if (this.data.body.length > 1) {
-        //this.values = this.prettifyDataVals();
-        //this.values = this.GetValues();
-        //this.initChart('myChart');
-        //this.initChart('myChart');
-        // let data : { x:any, y:any} [] = new Array();
-        // data = this.prettifyDataVals();
-
-        const chart = new Charts('myChart', this.GetValues());
+        const chart = new Charts('Biplot', this.GetValues(), this.GetTimestamps());
         chart.makeChart();
-        // chart.addData('myChart',null,data);
-
-        // const chart2 = new Charts('myChart2', this.prettifyDataVals());
-        // chart2.makeChart();
 
       }
     }
   }
 
-prettifyDataVals(){
-  let v1:any[] = new Array();
-  let v2:any[] = new Array();
 
-  let lol : { x:any, y:any} [] = new Array();
-  let complete : { x:any, y:any} [] = new Array();
-  let completing : { x:any, y:any} [] = new Array();
-
-  //lol[0] = {x: 1, y: 1};
-
-  let vals: any[][] = new Array();
-  //vals = this.GetValues();
-  for(var i = 0; i<vals.length;i++){
-    lol[i] = {x: vals[i][0], y: vals[i][1]};
-    //console.log(v1,v2);
-  }
-  //this.data.body[1].events.length
-  return lol
-}
 
   GetValues(){
     let v: any[][][] = new Array();
-    //let bod: any[] = this.GetBody()
     for(var i = 1; i<this.data.body.length;i++){
       v[i-1] = new Array();
       const attribute = this.data.body[i];
@@ -90,7 +58,6 @@ prettifyDataVals(){
         const event = attribute.events[j];
         for(var k = 0;k<event.value.length;k++){
           v[i-1][j][k] = event.value[k];
-          //console.log(event.value[k]);
         }
       }
     }
@@ -110,8 +77,6 @@ prettifyDataVals(){
     let A: any;
     x = this.SubtractMean(x);
     A = numeric.transpose(x);
-    let pca: any[] = new Array();
-    //pca = new PCA(x);
 
     let mat: any[][] = new Array();
     mat = cov.apply(this, A);
@@ -119,10 +84,15 @@ prettifyDataVals(){
     var E = numeric.eig(mat);
     let lambda :any[]= new Array();
     lambda = E.lambda.x;
-    var lambda_sort = lambda.sort
-    
+    var lambda_sort = lambda.sort;
 
-    //x = this.SubtractMean(x);
+    let eigV: any[] = new Array(lambda.length);
+    for(var i = 0;i<lambda.length;i++){
+      eigV[i] = lambda[i];
+    }
+    const barChart = new BarChart('ScreePlot', eigV);
+    barChart.makeChart();
+
     let FD: any[][] = new Array();
     FD = numeric.dot(E.E.x, A);
     x = numeric.transpose(FD);
@@ -134,8 +104,6 @@ prettifyDataVals(){
     let ct_com : number = 0;
     let ct_ing : number = 0;
 
-    // let time: any[] = new Array();
-    // time = this.GetTimestamps();
     for(var i = 0; i<x.length;i++){
       if(state[i] == "Drilling"){
         drilling[ct_d] = {x: x[i][0], y: x[i][1] };
@@ -167,16 +135,12 @@ prettifyDataVals(){
       }]
     }
 
-
-
-
     return scatterChartData;
   }
 
 
   GetTimestamps(){
     let t: any[][][] = new Array();
-    //let bod: any[] = this.GetBody()
     for(var i = 1; i<this.data.body.length;i++){
       t[i-1] = new Array();
       const attribute = this.data.body[i];
@@ -185,16 +149,13 @@ prettifyDataVals(){
         const event = attribute.events[j];
         for(var k = 0;k<event.timestamp.length;k++){
           t[i-1][j][k] = event.timestamp[k];
-          //console.log(event.value[k]);
         }
       }
     }
 
     let time: any[] = new Array();
-    //vals = this.GetValues();
     for(var i = 0; i<t.length;i++){
       time[i] = t[0][i][0]
-      //console.log(v1,v2);
     }
   
     return time;
@@ -218,28 +179,9 @@ prettifyDataVals(){
         n[i][j] = n[i][j] - mean[j];
       }
     }
-    // for(var i = 0; i<n[0].length;i++){
-    //   console.log(mean[i]);
-    // }
     return n;
   }
 
-
-  private isDataValid(): boolean {
-    return this.data && this.data.body && this.data.body.length;
-  }
-
-  private formatInfo() {
-    let output = '';
-    this.data.body.forEach(item => {
-      output += item.path + '\n';
-      output += item.timestamp + '\n';
-      output += item.type + '\n';
-      output += (item.good ? 'good' : 'bad') + ' data\n------------\n';
-    });
-
-    return output;
-  }
 }
 
 export class Charts{
@@ -247,19 +189,27 @@ export class Charts{
   _data: any;
   _time: any;
 
-  constructor(name: string, data: any){
+  constructor(name: string, data: any, time: any){
     this._data = data;
     this._name = name;
+    this._time = time;
   }
 
   public makeChart(){
     
     const c = <HTMLCanvasElement> document.getElementById(this._name);
     const ctx =  c.getContext('2d');
+    
     var scatterChart = new Chart(ctx, {
       type: 'scatter',
       data: this._data,
+      time: this._time,
       options: {
+          title: {
+            display: true,
+            text: 'PC1 vs PC2'
+          },
+
           responsive: true,
           hoverMode: 'single',
           events: ['click'],
@@ -267,13 +217,9 @@ export class Charts{
             enabled: true,
             mode: 'single',
             callbacks: {
-                label: function(tooltipItems, data) { 
-                   var multistringText = tooltipItems.xLabel + ' ' + tooltipItems.yLabel;
-                   //var myArr =  this._time;
-                      //  multistringText.push(this._time);
-                      //  multistringText.push(tooltipItems.index+1);
-                      //  multistringText.push('One more Item');
-                    return multistringText;
+                label: function(tooltipItem, data, time) { 
+                     var label = time[tooltipItem.datasetIndex];
+                    return label;
                 }
             }
           },
@@ -289,6 +235,68 @@ export class Charts{
   });
 
   }
+
+  public makeBarChart(){
+    const c = <HTMLCanvasElement> document.getElementById(this._name);
+    const ctx =  c.getContext('2d');
+
+    var myBarChart = new Chart(ctx, {
+      type: 'bar',
+      data: this._data,    
+      options: {
+          title: {
+            display: true,
+            text: 'Scree Plot'
+          }
+        }
+
+    });
+  }
 }
+
+export class BarChart{
+  _name: string;
+  _data: any;
+
+  constructor(name: string, data: any){
+    this._name = name;
+    this._data = data;
+  }
+
+  public makeChart(){
+    
+    let label: any[] = new Array(this._data.length);
+    for(var i = 0; i<this._data.length;i++){
+      label[i] = i+1;
+    }
+    const c = <HTMLCanvasElement> document.getElementById(this._name);
+    const ctx =  c.getContext('2d');
+    var myBarChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: label,
+        datasets: [{
+            label: 'Eigenvalues',
+            data: this._data,
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderColor: 'rgba(255,99,132,1)',
+            borderWidth: 1
+        }]
+      },    
+      options: {
+        title: {
+          display: true,
+          text: 'Scree Plot'
+        }
+      }
+    });
+
+
+  }
+
+}
+
+
+
 
 
